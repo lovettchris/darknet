@@ -1,6 +1,6 @@
 #ifndef DATA_H
 #define DATA_H
-#include <pthread.h>
+#include <thread>
 
 #include "matrix.h"
 #include "list.h"
@@ -71,9 +71,9 @@ typedef struct{
 
 void free_data(data d);
 
-pthread_t load_data(load_args args);
+std::thread load_data(load_args args);
 
-pthread_t load_data_in_thread(load_args args);
+std::thread load_data_in_thread(load_args args);
 
 void print_letters(float *pred, int n);
 data load_data_captcha(char **paths, int n, int m, int k, int w, int h);
