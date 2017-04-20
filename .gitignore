@@ -24,3 +24,5 @@ ehthumbs.db
 Icon?
 Thumbs.db
 *.swp
+/build
+/linux
