@@ -26,3 +26,6 @@ Thumbs.db
 *.swp
 /build
 /linux
+/src/yolo.weights
+/src/extraction.weights
+/src/darknet19_448.weights

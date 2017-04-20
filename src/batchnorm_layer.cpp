@@ -6,8 +6,8 @@
 layer make_batchnorm_layer(int batch, int w, int h, int c)
 {
     fprintf(stderr, "Batch Normalization Layer: %d x %d x %d image\n", w,h,c);
-	layer l;
-	memset(&l, 0, sizeof(layer));
+    layer l;
+    memset(&l, 0, sizeof(layer));
     l.type = BATCHNORM;
     l.batch = batch;
     l.h = l.out_h = h;

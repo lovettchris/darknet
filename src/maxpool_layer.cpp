@@ -20,8 +20,8 @@ image get_maxpool_delta(maxpool_layer l)
 
 maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int stride, int padding)
 {
-	maxpool_layer l;
-	memset(&l, 0, sizeof(maxpool_layer));
+    maxpool_layer l;
+    memset(&l, 0, sizeof(maxpool_layer));
     l.type = MAXPOOL;
     l.batch = batch;
     l.h = h;

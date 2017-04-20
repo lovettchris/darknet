@@ -378,8 +378,8 @@ detection_layer get_network_detection_layer(network net)
         }
     }
     fprintf(stderr, "Detection layer not found!!\n");
-	detection_layer l;
-	memset(&l, 0, sizeof(detection_layer));
+    detection_layer l;
+    memset(&l, 0, sizeof(detection_layer));
     return l;
 }
 

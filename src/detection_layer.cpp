@@ -12,8 +12,8 @@
 
 detection_layer make_detection_layer(int batch, int inputs, int n, int side, int classes, int coords, int rescore)
 {
-	detection_layer l;
-	memset(&l, 0, sizeof(detection_layer));
+    detection_layer l;
+    memset(&l, 0, sizeof(detection_layer));
     l.type = DETECTION;
 
     l.n = n;
@@ -26,7 +26,7 @@ detection_layer make_detection_layer(int batch, int inputs, int n, int side, int
     l.w = side;
     l.h = side;
     assert(side*side*((1 + l.coords)*l.n + l.classes) == inputs);
-    l.cost = (float*)(1, sizeof(float));
+    l.cost = (float*)calloc(1, sizeof(float));
     l.outputs = l.inputs;
     l.truths = l.side*l.side*(1+l.coords+l.classes);
     l.output = (float*)calloc(batch*l.outputs, sizeof(float));

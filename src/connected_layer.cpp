@@ -13,8 +13,8 @@
 connected_layer make_connected_layer(int batch, int inputs, int outputs, ACTIVATION activation, int batch_normalize)
 {
     int i;
-	connected_layer l;
-	memset(&l, 0, sizeof(connected_layer));
+    connected_layer l;
+    memset(&l, 0, sizeof(connected_layer));
     l.type = CONNECTED;
 
     l.inputs = inputs;
