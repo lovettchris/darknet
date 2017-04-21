@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.2.2)
 project(darknet)
 
+# to run this on Windows use this:
+# cmake -G "Visual Studio 14 2015 Win64" -D GPU=1 ..
+
 find_package(Threads REQUIRED)
+find_package(CUDA)
 
 IF(UNIX)
 	set(CMAKE_CXX_FLAGS "-std=c++11 -Wno-write-strings -Wall -Wfatal-errors ")
@@ -9,6 +13,13 @@ ELSE()
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CONSOLE /D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS")
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE ")
 ENDIF()
+
+
+LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_30,code=sm_30")
+LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_35,code=sm_35")
+LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_50,code=[sm_50,compute_50]")
+LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_52,code=[sm_52,compute_52]")
+LIST(APPEND NVCC_OPTIONS "-DGPU")
 
 ###########
 ## Build ##
@@ -83,21 +94,43 @@ LIST(APPEND DARKNET_SOURCES "super.cpp")
 LIST(APPEND DARKNET_SOURCES "voxel.cpp")
 LIST(APPEND DARKNET_SOURCES "tree.cpp")
 
-IF("${GPU}" STREQUAL "1")
-LIST(APPEND DARKNET_SOURCES "convolutional_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "deconvolutional_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "activation_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "im2col_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "col2im_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "blas_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "crop_layer_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "dropout_layer_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "maxpool_layer_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "network_kernels.cpp")
-LIST(APPEND DARKNET_SOURCES "avgpool_layer_kernels.cpp")
-ENDIF()
+IF(GPU)
+IF (CUDA_FOUND)
+	IF(UNIX)		
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU ")
+	ELSE()
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	ENDIF()
 
+	include_directories(
+			${CUDA_INCLUDE_DIRS}
+	)
+
+	LIST(APPEND DARKNET_SOURCES "convolutional_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "deconvolutional_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "activation_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "im2col_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "col2im_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "blas_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "crop_layer_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "dropout_layer_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "maxpool_layer_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "network_kernels.cu")
+	LIST(APPEND DARKNET_SOURCES "avgpool_layer_kernels.cu")
+
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${NVCC_OPTIONS}")
+	
+	message(STATUS "Creating CUDA darknet build, CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")
+	cuda_add_executable(darknet
+		${DARKNET_SOURCES}
+		)
+
+ELSE()
+	message(FATAL_ERROR "CUDA is not installed, so cannot build the GPU build")
+ENDIF()
+ELSE()
 add_executable(darknet ${DARKNET_SOURCES})
+ENDIF()
 			
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${PROJECT_NAME} ${CXX_EXP_LIB})
