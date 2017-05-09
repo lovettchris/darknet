@@ -146,7 +146,15 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
         i = get_current_batch(net);
         printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
-        if(i%1000==0 || (i < 1000 && i%100 == 0)){
+        if(i%1000==0){
+#ifdef GPU
+            if(ngpus != 1) sync_nets(nets, ngpus, 0);
+#endif
+            char buff[256];
+            sprintf(buff, "%s/%s.backup", backup_directory, base);
+            save_weights(net, buff);
+        }
+        if(i%10000==0 || (i < 1000 && i%100 == 0)){
 #ifdef GPU
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
@@ -297,9 +305,9 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     }
 
 
-    box *boxes = (box*)calloc(l.w*l.h*l.n, sizeof(box));
-    float **probs = (float**)calloc(l.w*l.h*l.n, sizeof(float *));
-    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float*)calloc(classes, sizeof(float));
+    box *boxes = calloc(l.w*l.h*l.n, sizeof(box));
+    float **probs = calloc(l.w*l.h*l.n, sizeof(float *));
+    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = calloc(classes+1, sizeof(float *));
 
     int m = plist->size;
     int i=0;
@@ -695,6 +703,7 @@ void run_detector(int argc, char **argv)
     float hier_thresh = find_float_arg(argc, argv, "-hier", .5);
     int cam_index = find_int_arg(argc, argv, "-c", 0);
     int frame_skip = find_int_arg(argc, argv, "-s", 0);
+    int avg = find_int_arg(argc, argv, "-avg", 3);
     if(argc < 4){
         fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
         return;
@@ -743,6 +752,6 @@ void run_detector(int argc, char **argv)
         int classes = option_find_int(options, "classes", 20);
         char *name_list = option_find_str(options, "names", "data/names.list");
         char **names = get_labels(name_list);
-        demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, hier_thresh, width, height, fps, fullscreen);
+        demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
     }
 }
