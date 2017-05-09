@@ -14,5 +14,5 @@ mkdir windows
 cd windows
 set OpenCV_DIR=D:\OpenSource\opencv\build
 cmake -G "Visual Studio 14 2015 Win64" -D OPENCV=1 ..
-cmake --build --config Release
+cmake --build . --config Release
 ````

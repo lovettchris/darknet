@@ -305,9 +305,9 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     }
 
 
-    box *boxes = calloc(l.w*l.h*l.n, sizeof(box));
-    float **probs = calloc(l.w*l.h*l.n, sizeof(float *));
-    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = calloc(classes+1, sizeof(float *));
+    box *boxes = (box*)calloc(l.w*l.h*l.n, sizeof(box));
+    float **probs = (float **)calloc(l.w*l.h*l.n, sizeof(float *));
+    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float*)calloc(classes+1, sizeof(float));
 
     int m = plist->size;
     int i=0;
