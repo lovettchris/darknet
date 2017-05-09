@@ -13,6 +13,7 @@ To build the windows version with opencv support, do this (after installing late
 mkdir windows
 cd windows
 set OpenCV_DIR=D:\OpenSource\opencv\build
-cmake -G "Visual Studio 14 2015 Win64" -D OPENCV=1 ..
+set path=%PATH%;D:\OpenSource\opencv\build\x64\vc14\bin\
+cmake -G "Visual Studio 14 2015 Win64" -D OPENCV=1 -D CV_MAJOR_VERSION=3 ..
 cmake --build . --config Release
 ````

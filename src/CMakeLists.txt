@@ -17,10 +17,12 @@ ELSE()
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE ")
 ENDIF()
 
+
 if(OPENCV)
-#    set(CMAKE_MODULE_PATH "${OPENCV_SOURCE_PATH}:${CMAKE_MODULE_PATH}") 
+    # Be sure to set environment variable OpenCV_DIR pointing to your local opencv build
     find_package(OpenCV REQUIRED)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCV ")    
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCV ")       
+    include_directories( ${OpenCV_INCLUDE_DIRS} )
 ENDIF()
 
 LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_30,code=sm_30")
@@ -33,11 +35,6 @@ LIST(APPEND NVCC_OPTIONS "-DGPU")
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
-include_directories(
-)
 
 ## Declare the executable
 
@@ -142,3 +139,7 @@ ENDIF()
 			
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${PROJECT_NAME} ${CXX_EXP_LIB})
+
+if(OPENCV)
+    target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+ENDIF()

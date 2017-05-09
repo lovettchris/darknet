@@ -7,7 +7,9 @@
 #include "box.h"
 #include "image.h"
 #include "demo.h"
-
+#include <chrono>
+#include <thread>
+#include "timer.hpp"
 #define DEMO 1
 
 #ifdef OPENCV
@@ -38,18 +40,8 @@ static int demo_done = 0;
 static float *last_avg2;
 static float *last_avg;
 static float *avg;
-double demo_time;
 
-double get_wall_time()
-{
-    struct timeval time;
-    if (gettimeofday(&time,NULL)){
-        return 0;
-    }
-    return (double)time.tv_sec + (double)time.tv_usec * .000001;
-}
-
-void *detect_in_thread()
+void detect_in_thread()
 {
     running = 1;
     float nms = .4;
@@ -80,18 +72,16 @@ void *detect_in_thread()
 
     demo_index = (demo_index + 1)%demo_frame;
     running = 0;
-    return 0;
 }
 
-void *fetch_in_thread(void *ptr)
+void fetch_in_thread()
 {
     int status = fill_image_from_stream(cap, buff[buff_index]);
     letterbox_image_into(buff[buff_index], net.w, net.h, buff_letter[buff_index]);
     if(status == 0) demo_done = 1;
-    return 0;
 }
 
-void *display_in_thread(void *ptr)
+void display_in_thread()
 {
     show_image_cv(buff[(buff_index + 1)%3], "Demo", ipl);
     int c = cvWaitKey(1);
@@ -103,7 +93,6 @@ void *display_in_thread(void *ptr)
         else demo_delay = 0;
     } else if (c == 27) {
         demo_done = 1;
-        return 0;
     } else if (c == 82) {
         demo_thresh += .02;
     } else if (c == 84) {
@@ -115,28 +104,13 @@ void *display_in_thread(void *ptr)
         demo_hier -= .02;
         if(demo_hier <= .0) demo_hier = .0;
     }
-    return 0;
-}
-
-void *display_loop(void *ptr)
-{
-    while(1){
-        display_in_thread(0);
-    }
-}
-
-void *detect_loop(void *ptr)
-{
-    while(1){
-        detect_in_thread(0);
-    }
 }
 
 void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg_frames, float hier, int w, int h, int frames, int fullscreen)
 {
     demo_delay = delay;
     demo_frame = avg_frames;
-    predictions = calloc(demo_frame, sizeof(float*));
+    predictions = (float**)calloc(demo_frame, sizeof(float*));
     image **alphabet = load_alphabet();
     demo_names = names;
     demo_alphabet = alphabet;
@@ -149,8 +123,8 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
         load_weights(&net, weightfile);
     }
     set_batch_network(&net, 1);
-    pthread_t detect_thread;
-    pthread_t fetch_thread;
+    std::thread fetch_thread;
+    std::thread detect_thread;
 
     srand(2222222);
 
@@ -184,20 +158,8 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
 
     boxes = (box *)calloc(l.w*l.h*l.n, sizeof(box));
     probs = (float **)calloc(l.w*l.h*l.n, sizeof(float *));
-    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float *)calloc(l.classes, sizeof(float));
+    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float *)calloc(l.classes+1, sizeof(float));
 
-    std::thread fetch_thread;
-    std::thread detect_thread;
-
-    fetch_in_thread(0);
-    det = in;
-    det_s = in_s;
-
-    fetch_in_thread(0);
-    detect_in_thread(0);
-    disp = det;
-    det = in;
-    det_s = in_s;
 
     buff[0] = get_image_from_stream(cap);
     buff[1] = copy_image(buff[0]);
@@ -218,22 +180,24 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
         }
     }
 
-    demo_time = get_wall_time();
+    Timer timer;
+    timer.start();
 
     while(!demo_done){
         buff_index = (buff_index + 1) %3;
         fetch_thread = std::thread(&fetch_in_thread);
-        detect_thread = std::thread(&detect_thread);
+        detect_thread = std::thread(&detect_in_thread);
         if(!prefix){
             if(count % (demo_delay+1) == 0){
-                fps = 1./(get_wall_time() - demo_time);
-                demo_time = get_wall_time();
+                timer.end();
+                fps = static_cast<float>(1.0/timer.seconds());
+                timer.start(); 
                 float *swap = last_avg;
                 last_avg  = last_avg2;
                 last_avg2 = swap;
                 memcpy(last_avg, avg, l.outputs*sizeof(float));
             }
-            display_in_thread(0);
+            display_in_thread();
         }else{
             char name[256];
             sprintf(name, "%s_%08d", prefix, count);

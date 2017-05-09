@@ -6,6 +6,7 @@
 #include "assert.h"
 #include "classifier.h"
 #include "cuda.h"
+#include "timer.hpp"
 
 float *get_regression_values(char **labels, int n)
 {
@@ -861,7 +862,7 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
     char *name_list = option_find_str(options, "names", 0);
     char **names = get_labels(name_list);
 
-    int *indexes = calloc(top, sizeof(int));
+    int *indexes = (int*)calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
     //cvNamedWindow("Threat", CV_WINDOW_NORMAL); 
@@ -873,8 +874,8 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
 
     while(1){
         ++count;
-        struct timeval tval_before, tval_after, tval_result;
-        gettimeofday(&tval_before, NULL);
+        Timer timer;
+        timer.start();
 
         image in = get_image_from_stream(cap);
         if(!in.data) break;
@@ -956,10 +957,9 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
         }
         free_image(in_s);
         free_image(in);
-
-        gettimeofday(&tval_after, NULL);
-        timersub(&tval_after, &tval_before, &tval_result);
-        float curr = 1000000.f/((long int)tval_result.tv_usec);
+        
+        timer.end();        
+        float curr = static_cast<float>(1.0 / timer.seconds());
         fps = .9*fps + .1*curr;
     }
 #endif
@@ -993,7 +993,7 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
     char *name_list = option_find_str(options, "names", 0);
     char **names = get_labels(name_list);
 
-    int *indexes = calloc(top, sizeof(int));
+    int *indexes = (int*)calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
     cvNamedWindow("Threat Detection", CV_WINDOW_NORMAL); 
@@ -1001,9 +1001,9 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
     float fps = 0;
     int i;
 
+    Timer timer;
     while(1){
-        struct timeval tval_before, tval_after, tval_result;
-        gettimeofday(&tval_before, NULL);
+        timer.start();
 
         image in = get_image_from_stream(cap);
         image in_s = resize_image(in, net.w, net.h);
@@ -1037,9 +1037,8 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
 
         cvWaitKey(10);
 
-        gettimeofday(&tval_after, NULL);
-        timersub(&tval_after, &tval_before, &tval_result);
-        float curr = 1000000.f/((long int)tval_result.tv_usec);
+        timer.end();
+        float curr = static_cast<float>(1.0 / timer.seconds());
         fps = .9*fps + .1*curr;
     }
 #endif
@@ -1070,17 +1069,16 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
     char *name_list = option_find_str(options, "names", 0);
     char **names = get_labels(name_list);
 
-    int *indexes = calloc(top, sizeof(int));
+    int *indexes = (int*)calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
     cvNamedWindow("Classifier", CV_WINDOW_NORMAL); 
     cvResizeWindow("Classifier", 512, 512);
     float fps = 0;
     int i;
-
+    Timer timer;
     while(1){
-        struct timeval tval_before, tval_after, tval_result;
-        gettimeofday(&tval_before, NULL);
+        timer.start();
 
         image in = get_image_from_stream(cap);
         image in_s = resize_image(in, net.w, net.h);
@@ -1104,9 +1102,8 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
 
         cvWaitKey(10);
 
-        gettimeofday(&tval_after, NULL);
-        timersub(&tval_after, &tval_before, &tval_result);
-        float curr = 1000000.f/((long int)tval_result.tv_usec);
+        timer.end(); 
+        float curr = static_cast<float>(1.0 / timer.seconds());
         fps = .9*fps + .1*curr;
     }
 #endif

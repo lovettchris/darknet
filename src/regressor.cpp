@@ -5,6 +5,7 @@
 #include "blas.h"
 #include "assert.h"
 #include "cuda.h"
+#include "timer.hpp"
 
 void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
 {
@@ -180,10 +181,9 @@ void demo_regressor(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
     cvNamedWindow("Regressor", CV_WINDOW_NORMAL); 
     cvResizeWindow("Regressor", 512, 512);
     float fps = 0;
-
+    Timer timer;
     while(1){
-        struct timeval tval_before, tval_after, tval_result;
-        gettimeofday(&tval_before, NULL);
+        timer.start();
 
         image in = get_image_from_stream(cap);
         image in_s = letterbox_image(in, net.w, net.h);
@@ -202,9 +202,8 @@ void demo_regressor(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
 
         cvWaitKey(10);
 
-        gettimeofday(&tval_after, NULL);
-        timersub(&tval_after, &tval_before, &tval_result);
-        float curr = 1000000.f/((long int)tval_result.tv_usec);
+        timer.end();
+        float curr = static_cast<float>(1.0 / timer.seconds());
         fps = .9*fps + .1*curr;
     }
 #endif

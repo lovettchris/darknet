@@ -734,7 +734,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
     return d;
 }
 
-void *load_thread(load_args* ptr)
+void load_thread(load_args* ptr)
 {
     //printf("Loading data: %d\n", rand());
     load_args a = *ptr;
@@ -770,7 +770,6 @@ void *load_thread(load_args* ptr)
         *a.d = load_data_tag(a.paths, a.n, a.m, a.classes, a.min, a.max, a.size, a.angle, a.aspect, a.hue, a.saturation, a.exposure);
     }
     free(ptr);
-    return 0;
 }
 
 std::thread load_data_in_thread(load_args args)
@@ -782,7 +781,7 @@ std::thread load_data_in_thread(load_args args)
     return thread;
 }
 
-void *load_threads(load_args *ptr)
+void load_threads(load_args *ptr)
 {
     int i;
     load_args args = *(load_args *)ptr;
@@ -810,7 +809,6 @@ void *load_threads(load_args *ptr)
     }
     free(buffers);
     delete[]threads;
-    return 0;
 }
 
 std::thread load_data(load_args args)
