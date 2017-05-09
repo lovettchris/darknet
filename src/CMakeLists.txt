@@ -5,7 +5,10 @@ project(darknet)
 # cmake -G "Visual Studio 14 2015 Win64" -D GPU=1 ..
 
 find_package(Threads REQUIRED)
-find_package(CUDA)
+
+IF(GPU)
+  find_package(CUDA REQUIRED)
+ENDIF()
 
 IF(UNIX)
 	set(CMAKE_CXX_FLAGS "-std=c++11 -Wno-write-strings -Wall -Wfatal-errors ")
@@ -14,6 +17,11 @@ ELSE()
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE ")
 ENDIF()
 
+if(OPENCV)
+#    set(CMAKE_MODULE_PATH "${OPENCV_SOURCE_PATH}:${CMAKE_MODULE_PATH}") 
+    find_package(OpenCV REQUIRED)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCV ")    
+ENDIF()
 
 LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_30,code=sm_30")
 LIST(APPEND NVCC_OPTIONS "-gencode arch=compute_35,code=sm_35")
